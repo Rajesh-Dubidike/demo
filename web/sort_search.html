@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge Sort & Binary Search Demo</title>
+    <link rel="stylesheet" href="sort_search.css">
+    
+</head>
+<body>
+
+<div class="container">
+    <!-- Merge Sort Section (Left) -->
+    <div class="half">
+        <h1>Merge Sort</h1>
+        <p>Enter numbers separated by commas to sort:</p>
+        <input type="text" id="userNumbers" placeholder="Enter numbers like 34,7,23,32,5">
+        <button onclick="sortNumbers()">Sort Numbers</button>
+        <div class="message" id="sortedMessage"></div>
+        <h3>Merge Sort Steps:</h3>
+        <div class="steps" id="mergeSortSteps"></div>
+    </div>
+
+    <!-- Binary Search Section (Right) -->
+    <div class="half">
+        <h2>Binary Search</h2>
+        <form id="inputForm" onsubmit="event.preventDefault(); performSearch();">
+            <label for="arrayInput">Sorted Numbers:</label>
+            <div id="sortedNumbersDisplay"></div>
+            <br>
+            <label for="keyInput">Enter the key to search:</label>
+            <input type="number" id="keyInput" placeholder="e.g. 11" required>
+            <br>
+            <button id="search" type="submit">Search</button>
+            <button id="reset" type="button" onclick="resetGame()">Reset</button>
+            <br>
+        </form>
+        <p id="searchMessage"></p>
+        <h3>Binary Search Steps:</h3>
+        <div id="frameDiv2"></div>
+    </div>
+</div>
+
+<script>
+    let sortedNumbers = [];
+
+    // Merge Sort function
+    function mergeSort(arr, steps) {
+        if (arr.length <= 1) {
+            return arr;
+        }
+
+        const mid = Math.floor(arr.length / 2);
+        const left = arr.slice(0, mid);
+        const right = arr.slice(mid);
+
+        steps.push(`Dividing: ${arr.join(', ')}`);
+        
+        const mergedArray = merge(mergeSort(left, steps), mergeSort(right, steps), steps);
+        
+        steps.push(`Merging: ${mergedArray.join(', ')}`);
+        
+        return mergedArray;
+    }
+
+    function merge(left, right, steps) {
+        let result = [], leftIndex = 0, rightIndex = 0;
+
+        while (leftIndex < left.length && rightIndex < right.length) {
+            if (left[leftIndex] < right[rightIndex]) {
+                result.push(left[leftIndex]);
+                leftIndex++;
+            } else {
+                result.push(right[rightIndex]);
+                rightIndex++;
+            }
+        }
+
+        return result.concat(left.slice(leftIndex)).concat(right.slice(rightIndex));
+    }
+
+    // Function to sort numbers and display merge sort steps
+    function sortNumbers() {
+        const input = document.getElementById("userNumbers").value;
+        const sortedMessage = document.getElementById("sortedMessage");
+        const mergeSortSteps = document.getElementById("mergeSortSteps");
+        mergeSortSteps.innerHTML = "";  // Clear previous steps
+
+        // Split input by commas, parse as numbers and filter invalid entries
+        const numbers = input.split(',').map(num => parseFloat(num)).filter(num => !isNaN(num));
+
+        if (numbers.length === 0) {
+            sortedMessage.textContent = "Please enter valid numbers!";
+        } else {
+            let steps = [];
+            sortedNumbers = mergeSort(numbers, steps);
+            sortedMessage.textContent = `Sorted Numbers: ${sortedNumbers.join(', ')}`;
+            document.getElementById("sortedNumbersDisplay").innerText = sortedNumbers.join(', ');
+
+            // Display merge sort steps
+            steps.forEach(step => {
+                mergeSortSteps.innerHTML += `<p>${step}</p>`;
+            });
+        }
+    }
+
+    // Binary Search function with visualization
+    async function binarySearch(arr, target) {
+        let start = 0;
+        let end = arr.length - 1;
+
+        while (start <= end) {
+            let mid = Math.floor((start + end) / 2);
+
+            // Highlight comparison step
+            highlightStep(start, end, mid, arr);
+
+            if (arr[mid] === target) {
+                await delay(2000); // Pause to show the final comparison
+                return mid; // Return index of found element
+            } else if (arr[mid] < target) {
+                start = mid + 1;
+            } else {
+                end = mid - 1;
+            }
+
+            await delay(2000); // Pause between each step
+        }
+        return -1; // Return -1 if element not found
+    }
+
+    // Function to delay execution (for visualization)
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Perform the search based on user input
+    async function performSearch() {
+        const keyInput = parseInt(document.getElementById('keyInput').value);
+        const searchMessage = document.getElementById("searchMessage");
+        const frameDiv = document.getElementById('frameDiv2');
+        frameDiv.innerHTML = ""; // Clear previous steps
+
+        if (sortedNumbers.length === 0) {
+            searchMessage.textContent = "Please sort the numbers first!";
+            return;
+        }
+
+        let steps = [];
+        const index = await binarySearch(sortedNumbers, keyInput);
+
+        // Display binary search steps
+        steps.forEach(step => {
+            const stepDiv = document.createElement('div');
+            stepDiv.innerText = step;
+            frameDiv.appendChild(stepDiv);
+        });
+
+        if (index !== -1) {
+            searchMessage.textContent = `Number ${keyInput} found at index ${index}.`;
+        } else {
+            searchMessage.textContent = `Number ${keyInput} not found.`;
+        }
+    }
+
+    // Highlight the step of the binary search
+    function highlightStep(start, end, mid, arr) {
+        const frameDiv = document.getElementById('frameDiv2');
+        frameDiv.innerHTML = ''; // Clear previous step
+        arr.forEach((num, i) => {
+            const diceDiv = document.createElement('div');
+            diceDiv.className = 'diceDiv2';
+            diceDiv.innerHTML = `<span>${num}</span>`;
+            
+            if (i === mid) {
+                diceDiv.classList.add('diceDiv2-compare'); // Highlight comparison element
+            } else if (i >= start && i <= end) {
+                diceDiv.style.backgroundColor = 'lightgreen'; // Highlight the range being searched
+            }
+            frameDiv.appendChild(diceDiv);
+        });
+    }
+
+    // Reset the form and clear the results
+    function resetGame() {
+        document.getElementById("userNumbers").value = '';
+        document.getElementById("keyInput").value = '';
+        document.getElementById("sortedMessage").innerHTML = '';
+        document.getElementById("mergeSortSteps").innerHTML = '';
+        document.getElementById("sortedNumbersDisplay").innerHTML = '';
+        document.getElementById("searchMessage").innerHTML = '';
+        document.getElementById("frameDiv2").innerHTML = '';
+        sortedNumbers = [];
+    }
+</script>
+
+</body>
+</html>
